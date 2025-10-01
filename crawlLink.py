@@ -52,7 +52,7 @@ def crawl_batdongsan(page=1):
         # 3. Tìm các thẻ div con có class chứa "js__card js__card-full-web"
         print("Đang tìm các sản phẩm...")
         product_cards = product_container.find_elements(By.CSS_SELECTOR, 
-            "div.js__card.js__card-full-web.pr-container.re__card-full.re__vip-diamond")
+            "div.js__card.js__card-full-web.pr-container.re__card-full")
         
         print(f"Đã tìm thấy {len(product_cards)} sản phẩm. Đang trích xuất liên kết...")
         
@@ -153,5 +153,8 @@ def crawl_batdongsan(page=1):
         return product_links
 
 if __name__ == "__main__":
-    for i in range(1, 2890): 
+    for i in range(12, 2890): 
+        print(f"\n{'='*50}")
+        print(f"ĐANG XỬ LÝ TRANG {i}/2890")
+        print(f"{'='*50}\n")
         crawl_batdongsan(page=i)
