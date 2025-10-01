@@ -5,14 +5,12 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import json
-import os
-from tqdm import tqdm
-
 def setup_driver():
     """Khởi tạo trình duyệt Chrome"""
     options = Options()
-    options.add_argument("--headless")  # Chạy ẩn để tăng tốc độ
+    # options.add_argument("--headless")  # Bỏ comment nếu muốn chạy ẩn
     options.add_argument("--no-sandbox")
+    options.add_argument("--headless")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -29,144 +27,131 @@ def setup_driver():
     
     return driver
 
-def save_progress(links, last_page):
-    """Lưu tiến độ hiện tại để có thể tiếp tục sau khi dừng"""
-    progress_data = {
-        'last_completed_page': last_page,
-        'total_links': len(links)
-    }
-    
-    with open('progress.json', 'w', encoding='utf-8') as f:
-        json.dump(progress_data, f, ensure_ascii=False, indent=4)
-    
-    # Lưu các liên kết đã thu thập được
-    with open('linkProduct.json', 'w', encoding='utf-8') as f:
-        json.dump(links, f, ensure_ascii=False, indent=4)
-    
-    print(f"\nĐã lưu tiến độ: trang {last_page}, tổng {len(links)} liên kết")
-
-def load_progress():
-    """Tải tiến độ đã lưu trước đó (nếu có)"""
-    if os.path.exists('progress.json'):
-        try:
-            with open('progress.json', 'r', encoding='utf-8') as f:
-                progress = json.load(f)
-                last_page = progress.get('last_completed_page', 0)
-            
-            # Tải các liên kết đã thu thập trước đó
-            if os.path.exists('linkProduct.json'):
-                with open('linkProduct.json', 'r', encoding='utf-8') as f:
-                    links = json.load(f)
-                return last_page, links
-        except Exception as e:
-            print(f"Lỗi khi tải tiến độ: {e}")
-    
-    return 0, []  # Trả về trang 0 và danh sách rỗng nếu không có tiến độ
-
-def crawl_page(driver, page_number):
-    """Cào dữ liệu từ một trang cụ thể"""
-    page_links = []
-    
-    # Tạo URL với số trang
-    url = f"https://batdongsan.com.vn/nha-dat-ban-ha-noi/p{page_number}"
+def crawl_batdongsan(page=1):
+    """Cào dữ liệu từ batdongsan.com.vn"""
+    driver = setup_driver()
+    product_links = []
     
     try:
-        # Truy cập trang
+        # 1. Truy cập website
+        url = "https://batdongsan.com.vn/nha-dat-ban-ha-noi/p" + str(page)
+        print(f"Đang truy cập {url}...")
         driver.get(url)
         
         # Đợi trang tải xong
         time.sleep(5)
         
-        # Tìm container sản phẩm
+        # 2. Tìm container sản phẩm
+        print("Đang tìm container sản phẩm...")
         product_container = driver.find_element(By.ID, "product-lists-web")
         
         # Cuộn trang để đảm bảo tải tất cả sản phẩm
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight/3);")
-        time.sleep(1)
-        driver.execute_script("window.scrollTo(0, 2*document.body.scrollHeight/3);")
-        time.sleep(1)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(1)
+        driver.execute_script("arguments[0].scrollIntoView(true);", product_container)
+        time.sleep(2)
         
-        # Tìm các thẻ div sản phẩm
+        # 3. Tìm các thẻ div con có class chứa "js__card js__card-full-web"
+        print("Đang tìm các sản phẩm...")
         product_cards = product_container.find_elements(By.CSS_SELECTOR, 
-            "div[class*='js__card']")  # Tìm tất cả các loại sản phẩm, không chỉ VIP Diamond
+            "div.js__card.js__card-full-web.pr-container.re__card-full.re__vip-diamond")
         
-        # Lấy link từ các sản phẩm
-        for card in product_cards:
+        print(f"Đã tìm thấy {len(product_cards)} sản phẩm. Đang trích xuất liên kết...")
+        
+        # 4. Chỉ lấy link từ các sản phẩm
+        for i, card in enumerate(product_cards, 1):
             try:
                 link = card.find_element(By.TAG_NAME, "a").get_attribute("href")
-                if link and link not in page_links:  # Tránh trùng lặp
-                    page_links.append(link)
+                product_links.append(link)
+                print(f"Đã lấy link [{i}/{len(product_cards)}]: {link}")
             except Exception as e:
-                continue  # Bỏ qua nếu không lấy được link
+                print(f"Không thể lấy link cho sản phẩm {i}: {e}")
         
-        print(f"Trang {page_number}: tìm thấy {len(page_links)} liên kết")
+        # 5. Lưu tất cả link vào file JSON (ĐÃ CHỈNH SỬA - CỘNG DỒN THAY VÌ GHI ĐÈ)
+        # Kiểm tra xem file đã tồn tại chưa
+        import os
+        existing_links = []
+        if os.path.exists('linkProduct.json') and os.path.getsize('linkProduct.json') > 0:
+            try:
+                with open('linkProduct.json', 'r', encoding='utf-8') as f:
+                    existing_links = json.load(f)
+                print(f"Đã tìm thấy file cũ với {len(existing_links)} liên kết")
+            except json.JSONDecodeError:
+                print("File JSON hiện tại không hợp lệ, tạo mới")
+                existing_links = []
+        
+        # Thêm các liên kết mới vào danh sách hiện có
+        for link in product_links:
+            if link not in existing_links:
+                existing_links.append(link)
+                
+        # Ghi toàn bộ danh sách đã cập nhật vào file
+        with open('linkProduct.json', 'w', encoding='utf-8') as f:
+            json.dump(existing_links, f, ensure_ascii=False, indent=4)
+        
+        print(f"\nHoàn thành! Đã lưu {len(existing_links)} liên kết vào file linkProduct.json")
+        print(f"(Trong đó có {len(product_links)} liên kết mới từ lần cào này)")
         
     except Exception as e:
-        print(f"Lỗi khi xử lý trang {page_number}: {e}")
-    
-    return page_links
-
-def crawl_batdongsan(start_page=1, end_page=2895):
-    """Cào dữ liệu từ nhiều trang"""
-    # Tải tiến độ trước đó nếu có
-    last_completed_page, all_links = load_progress()
-    
-    if last_completed_page > 0:
-        print(f"Tiếp tục từ trang {last_completed_page + 1}, đã có {len(all_links)} liên kết")
-        start_page = last_completed_page + 1
-    else:
-        all_links = []
-    
-    # Kiểm tra xem có cần tiếp tục không
-    if start_page > end_page:
-        print("Đã hoàn thành tất cả các trang!")
-        return all_links
-    
-    driver = setup_driver()
-    
-    try:
-        # Lặp qua các trang cần cào
-        for page_num in tqdm(range(start_page, end_page + 1), desc="Đang xử lý các trang"):
-            # Cào dữ liệu từ trang hiện tại
-            page_links = crawl_page(driver, page_num)
-            
-            # Thêm vào danh sách tổng
-            all_links.extend(page_links)
-            
-            # Lưu tiến độ sau mỗi 5 trang hoặc trang cuối
-            if page_num % 5 == 0 or page_num == end_page:
-                save_progress(all_links, page_num)
-            
-            # Nghỉ ngắn giữa các trang để tránh bị chặn
-            time.sleep(2)
-    
-    except KeyboardInterrupt:
-        print("\nĐã dừng quá trình cào dữ liệu bởi người dùng!")
-        # Lưu tiến độ hiện tại trước khi dừng
-        current_page = start_page + len(all_links) - 1
-        save_progress(all_links, current_page)
-    
-    except Exception as e:
-        print(f"Lỗi không xác định: {e}")
+        print(f"Lỗi: {e}")
     
     finally:
         # Đóng trình duyệt
+        print("Đóng trình duyệt...")
         driver.quit()
         
-        # Loại bỏ các liên kết trùng lặp
-        all_links = list(dict.fromkeys(all_links))
+        return product_links
+    """Cào dữ liệu từ batdongsan.com.vn"""
+    driver = setup_driver()
+    product_links = []
+    
+    try:
+        # 1. Truy cập website
+        url = "https://batdongsan.com.vn/nha-dat-ban-ha-noi/p3"
+        print(f"Đang truy cập {url}...")
+        driver.get(url)
         
-        # Lưu kết quả cuối cùng
+        # Đợi trang tải xong
+        time.sleep(5)
+        
+        # 2. Tìm container sản phẩm
+        print("Đang tìm container sản phẩm...")
+        product_container = driver.find_element(By.ID, "product-lists-web")
+        
+        # Cuộn trang để đảm bảo tải tất cả sản phẩm
+        driver.execute_script("arguments[0].scrollIntoView(true);", product_container)
+        time.sleep(2)
+        
+        # 3. Tìm các thẻ div con có class chứa "js__card js__card-full-web"
+        print("Đang tìm các sản phẩm...")
+        product_cards = product_container.find_elements(By.CSS_SELECTOR, 
+            "div.js__card.js__card-full-web.pr-container.re__card-full.re__vip-diamond")
+        
+        print(f"Đã tìm thấy {len(product_cards)} sản phẩm. Đang trích xuất liên kết...")
+        
+        # 4. Chỉ lấy link từ các sản phẩm
+        for i, card in enumerate(product_cards, 1):
+            try:
+                link = card.find_element(By.TAG_NAME, "a").get_attribute("href")
+                product_links.append(link)
+                print(f"Đã lấy link [{i}/{len(product_cards)}]: {link}")
+            except Exception as e:
+                print(f"Không thể lấy link cho sản phẩm {i}: {e}")
+        
+        # 5. Lưu tất cả link vào file JSON
         with open('linkProduct.json', 'w', encoding='utf-8') as f:
-            json.dump(all_links, f, ensure_ascii=False, indent=4)
+            json.dump(product_links, f, ensure_ascii=False, indent=4)
         
-        print(f"\nHoàn thành! Đã lưu tổng cộng {len(all_links)} liên kết vào file linkProduct.json")
+        print(f"\nHoàn thành! Đã lưu {len(product_links)} liên kết vào file linkProduct.json")
         
-        return all_links
+    except Exception as e:
+        print(f"Lỗi: {e}")
+    
+    finally:
+        # Đóng trình duyệt
+        print("Đóng trình duyệt...")
+        driver.quit()
+        
+        return product_links
 
 if __name__ == "__main__":
-    # Mặc định sẽ cào từ trang 1 đến 2895
-    # Có thể thay đổi thành một khoảng nhỏ hơn để kiểm tra, ví dụ: crawl_batdongsan(1, 10)
-    crawl_batdongsan(1, 2895)
+    for i in range(1, 2890): 
+        crawl_batdongsan(page=i)
