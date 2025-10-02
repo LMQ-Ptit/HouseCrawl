@@ -39,7 +39,7 @@ def crawl_batdongsan(page=1):
         driver.get(url)
         
         # Đợi trang tải xong
-        time.sleep(5)
+        time.sleep(2)
         
         # 2. Tìm container sản phẩm
         print("Đang tìm container sản phẩm...")
@@ -47,7 +47,7 @@ def crawl_batdongsan(page=1):
         
         # Cuộn trang để đảm bảo tải tất cả sản phẩm
         driver.execute_script("arguments[0].scrollIntoView(true);", product_container)
-        time.sleep(2)
+        time.sleep(1)
         
         # 3. Tìm các thẻ div con có class chứa "js__card js__card-full-web"
         print("Đang tìm các sản phẩm...")
@@ -153,7 +153,7 @@ def crawl_batdongsan(page=1):
         return product_links
 
 if __name__ == "__main__":
-    for i in range(12, 2890): 
+    for i in range(2245, 2890): 
         print(f"\n{'='*50}")
         print(f"ĐANG XỬ LÝ TRANG {i}/2890")
         print(f"{'='*50}\n")
