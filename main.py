@@ -245,7 +245,7 @@ if __name__ == "__main__":
         start_time = time.time()
         
         # Xử lý URL với đa tiến trình
-        process_with_multiprocessing(urls[2924:], num_processes, output_csv)
+        process_with_multiprocessing(urls[3574:], num_processes, output_csv)
         
         # Tính thời gian thực hiện
         elapsed_time = time.time() - start_time
