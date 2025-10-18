@@ -45,6 +45,16 @@ def crawl_property_info(url):
         wait_time = random.uniform(1, 1.5)
         # Đợi trang tải xong
         time.sleep(wait_time)
+        # Lấy Địa chỉ
+        try:
+            addr_el = driver.find_element(By.CSS_SELECTOR, "span.re__pr-short-description.js__pr-address")
+            addr_text = addr_el.text.strip()
+            if addr_text:
+                property_data["Địa chỉ"] = addr_text
+        except Exception:
+            print("Không tìm thấy địa chỉ")
+            # Không tìm thấy địa chỉ thì bỏ qua
+            pass
         
         # Tìm tất cả các thẻ div có class="re__pr-specs-content-item"
         spec_items = driver.find_elements(By.CSS_SELECTOR, "div.re__pr-specs-content-item")
@@ -237,6 +247,7 @@ if __name__ == "__main__":
     # Đọc các URL từ file CSV
     print("📂 Đang đọc danh sách URL...")
     urls = read_urls_from_csv(input_csv)
+    urls=urls[7802:]
     
     if urls:
         print(f"🔍 Đã tìm thấy {len(urls)} URL để xử lý với {num_processes} tiến trình\n")
@@ -245,7 +256,7 @@ if __name__ == "__main__":
         start_time = time.time()
         
         # Xử lý URL với đa tiến trình
-        process_with_multiprocessing(urls[3574:], num_processes, output_csv)
+        process_with_multiprocessing(urls, num_processes, output_csv)
         
         # Tính thời gian thực hiện
         elapsed_time = time.time() - start_time
