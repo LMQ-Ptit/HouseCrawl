@@ -253,7 +253,7 @@ if __name__ == "__main__":
     # File đầu vào và đầu ra    
     input_csv = 'linkProduct.csv'
     output_csv = 'property_data.csv'
-    num_processes = 4 # Số tiến trình xử lý đồng thời
+    num_processes = 6 # Số tiến trình xử lý đồng thời
     
     # Hiển thị tiêu đề
     print("\n" + "="*70)
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     # Đọc các URL từ file CSV
     print("📂 Đang đọc danh sách URL...")
     urls = read_urls_from_csv(input_csv)
-    urls=urls[26391:]
+    urls=urls[20511:]
     
     if urls:
         print(f"🔍 Đã tìm thấy {len(urls)} URL để xử lý với {num_processes} tiến trình\n")
