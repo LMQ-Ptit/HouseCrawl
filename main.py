@@ -38,8 +38,24 @@ def setup_driver():
 def crawl_property_info(url):
     """Cào thông tin bất động sản từ URL cụ thể"""
     driver = setup_driver()
-    property_data = {}
-    
+    property_data = {
+        "Địa chỉ": None,
+        "Khoảng giá": None,
+        "Diện tích": None,
+        "Số phòng ngủ": None,
+        "Số phòng tắm, vệ sinh": None,
+        "Số tầng": None,
+        "Pháp lý": None,
+        "Nội thất": None,
+        "Ngày đăng": None,
+        "Ngày hết hạn": None,
+        "Loại tin": None,
+        "Mã tin": None,
+        "Mặt tiền": None,
+        "Đường vào": None,
+        "Hướng ban công": None,
+        "Hướng nhà": None,
+    }
     try:
         driver.get(url)
         wait_time = random.uniform(1, 1.5)
@@ -237,7 +253,7 @@ if __name__ == "__main__":
     # File đầu vào và đầu ra    
     input_csv = 'linkProduct.csv'
     output_csv = 'property_data.csv'
-    num_processes = 6 # Số tiến trình xử lý đồng thời
+    num_processes = 4 # Số tiến trình xử lý đồng thời
     
     # Hiển thị tiêu đề
     print("\n" + "="*70)
@@ -247,7 +263,7 @@ if __name__ == "__main__":
     # Đọc các URL từ file CSV
     print("📂 Đang đọc danh sách URL...")
     urls = read_urls_from_csv(input_csv)
-    urls=urls[19322:]
+    urls=urls[26391:]
     
     if urls:
         print(f"🔍 Đã tìm thấy {len(urls)} URL để xử lý với {num_processes} tiến trình\n")
