@@ -263,7 +263,7 @@ if __name__ == "__main__":
     # Đọc các URL từ file CSV
     print("📂 Đang đọc danh sách URL...")
     urls = read_urls_from_csv(input_csv)
-    urls=urls[20511:]
+    urls=urls[3241:]
     
     if urls:
         print(f"🔍 Đã tìm thấy {len(urls)} URL để xử lý với {num_processes} tiến trình\n")
