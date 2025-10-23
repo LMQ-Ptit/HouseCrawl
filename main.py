@@ -263,26 +263,15 @@ if __name__ == "__main__":
     # Đọc các URL từ file CSV
     print("📂 Đang đọc danh sách URL...")
     urls = read_urls_from_csv(input_csv)
-    urls=urls[7590:]
+    urls=urls[9550:]
     
     if urls:
         print(f"🔍 Đã tìm thấy {len(urls)} URL để xử lý với {num_processes} tiến trình\n")
         
-        # Ghi lại thời gian bắt đầu
-        start_time = time.time()
         
         # Xử lý URL với đa tiến trình
         process_with_multiprocessing(urls, num_processes, output_csv)
         
-        # Tính thời gian thực hiện
-        elapsed_time = time.time() - start_time
-        hours, remainder = divmod(elapsed_time, 3600)
-        minutes, seconds = divmod(remainder, 60)
         
-        # Hiển thị thông báo hoàn thành
-        print("\n" + "="*70)
-        print(f"✅ HOÀN THÀNH! Thời gian: {int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}")
-        print(f"📊 Dữ liệu đã được lưu vào: {output_csv}")
-        print("="*70)
     else:
         print("❌ Không có URL để xử lý.")
